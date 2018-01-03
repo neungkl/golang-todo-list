@@ -7,6 +7,6 @@ WORKDIR /todo
 COPY . .
 
 WORKDIR ./server
-RUN go build
+RUN chmod +x start_server.sh
 
-CMD ["./server"]
+CMD ["sh", "./start_server.sh"]
