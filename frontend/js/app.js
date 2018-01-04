@@ -1,10 +1,16 @@
 import TodoApp from './TodoApp.js';
+import TodoHeader from './TodoHeader.js';
+import TodoMain from './TodoMain.js';
 
-console.log("work!")
+Vue.config.devtools = true;
 
-new Vue({
-  el: '#todoapp',
-  components: {
-    TodoApp
-  }
-});
+window.onload = function () {  
+  new Vue({
+    el: '#todoapp',
+    components: {
+      TodoHeader,
+      TodoMain,
+      TodoApp
+    }
+  });
+}  
