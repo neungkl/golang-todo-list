@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -112,7 +113,15 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/list", ListTodo).Methods("GET")
 	router.HandleFunc("/add", AddTodo).Methods("POST")
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../frontend/")))
+
+	router.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if strings.HasSuffix(path, "vue") {
+			w.Header().Set("Content-Type", "apllication/javascript")
+		}
+		http.ServeFile(w, r, "../frontend/"+r.URL.Path)
+	})
+
 	log.Println("Start server complete.")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
