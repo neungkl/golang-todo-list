@@ -1,12 +1,16 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 )
+
+var db *sql.DB
 
 // Todo object
 type Todo struct {
@@ -19,13 +23,42 @@ type Todo struct {
 type Status struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
+	Data    *Todo  `json:"data,omitempty"`
 }
-
-var todos = []Todo{}
 
 // ListTodo lists all todo data
 func ListTodo(res http.ResponseWriter, req *http.Request) {
-	json.NewEncoder(res).Encode(todos)
+	status := Status{Success: true}
+	rows, err := db.Query(`SELECT id, description, completed FROM todo ORDER BY id`)
+
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		status.Success = false
+		log.Println(err)
+	} else {
+		defer rows.Close()
+	}
+
+	var todos = []Todo{}
+	for rows.Next() {
+		todo := Todo{}
+
+		err := rows.Scan(&todo.ID, &todo.Description, &todo.Completed)
+
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			status.Success = false
+			log.Println(err)
+		} else {
+			todos = append(todos, todo)
+		}
+	}
+
+	if !status.Success {
+		json.NewEncoder(res).Encode(status)
+	} else {
+		json.NewEncoder(res).Encode(todos)
+	}
 }
 
 // AddTodo adds another todo in list
@@ -49,8 +82,19 @@ func AddTodo(res http.ResponseWriter, req *http.Request) {
 				completed := false
 				todo.Completed = &completed
 			}
-			todos = append(todos, todo)
-			status.Success = true
+			var userid int
+			err := db.QueryRow(`
+				INSERT INTO todo(description, completed) VALUES($1, $2) RETURNING id
+			`, todo.Description, todo.Completed).Scan(&userid)
+
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				log.Println(err)
+			} else {
+				status.Success = true
+				data := Todo{ID: &userid}
+				status.Data = &data
+			}
 		}
 	}
 
@@ -58,6 +102,13 @@ func AddTodo(res http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	connStr := "postgres://postgres:todopass@db/postgres?sslmode=disable"
+	pgDb, err := sql.Open("postgres", connStr)
+	db = pgDb
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router := mux.NewRouter()
 	router.HandleFunc("/list", ListTodo).Methods("GET")
 	router.HandleFunc("/add", AddTodo).Methods("POST")

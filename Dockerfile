@@ -1,6 +1,7 @@
 FROM golang:latest
 
 RUN go get github.com/gorilla/mux
+RUN go get github.com/lib/pq
 
 WORKDIR /todo
 
