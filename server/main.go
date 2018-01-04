@@ -112,6 +112,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/list", ListTodo).Methods("GET")
 	router.HandleFunc("/add", AddTodo).Methods("POST")
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../frontend/")))
 	log.Println("Start server complete.")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
