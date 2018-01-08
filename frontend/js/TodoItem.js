@@ -1,6 +1,6 @@
 export default {
   name: 'todo-item',
-  props: ['todo'],
+  props: ['todo', 'eventBus'],
   template: `
   <li v-bind:class="getTodoStatus()">
     <div class="view">
@@ -18,14 +18,44 @@ export default {
     }
   },
   methods: {
+    updateTodo(todo) {
+      fetch('/update', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: todo.id,
+          description: todo.description,
+          completed: todo.completed
+        })
+      }).then(
+        function(response) {
+          if (response.status === 200) {
+            this.eventBus.$emit('refresh');
+          } else {
+            alert('Error!');
+          }
+        }.bind(this),
+        function (error) {
+          alert(error);
+        }
+      );
+    },
     updateChecked(event) {
-      this.checked = event.target.checked;
+      // this.checked = event.target.checked;
+      this.updateTodo({
+        id: this.todo.id,
+        description: this.todo.description,
+        completed: event.target.checked
+      })
       this.todo.completed = this.checked;
     },
     updateEditing(event, edit) {
       this.edit = edit;
       if (edit === false) {
-        this.todo.description = event.target.value;
+        this.updateTodo({
+          id: this.todo.id,
+          description: event.target.value,
+          completed: this.todo.completed
+        });
       }
     },
     getTodoStatus() {

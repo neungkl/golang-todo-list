@@ -11,9 +11,17 @@ export default {
   },
   template: `
   <div>
-    <todo-header></todo-header>
-    <todo-main></todo-main>
+    <todo-header v-bind:eventBus="eventBus"></todo-header>
+    <todo-main v-bind:eventBus="eventBus"></todo-main>
     <todo-footer></todo-footer>
   </div>
-  `
+  `,
+  data() {
+    return {
+      eventBus: new Vue()
+    }
+  },
+  methods: {
+
+  }
 }
