@@ -17,16 +17,7 @@ export default {
   `,
 	data() {
     return {
-			todos: [
-				{
-					description: 'Taste Javascript',
-          completed: true
-				},
-				{
-					description: 'Buy a unicord',
-          completed: false
-				}
-			]
+			todos: []
 		};
   },
   methods: {
@@ -35,6 +26,14 @@ export default {
         return response.json();
       }).then(function (response) {
         this.todos = response;
+        var count = 0;
+        for (var i = 0; i < this.todos.length; i++) {
+          var todo = this.todos[i];
+          if (!todo.completed) {
+            count++;
+          }
+        }
+        this.eventBus.$emit('itemCount', count);
       }.bind(this));
     },
     refresh() {

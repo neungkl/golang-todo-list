@@ -6,7 +6,7 @@ export default {
     <div class="view">
       <input class="toggle" type="checkbox" v-on:click="updateChecked" v-bind:checked="todo.completed">
       <label v-on:click="updateEditing($event, true)">{{ todo.description }}</label>
-      <button class="destroy"></button>
+      <button class="destroy" v-on:click="deleteTodo"></button>
     </div>
     <input class="edit" v-bind:value="todo.description" v-on:keyup.enter="updateEditing($event, false)">
   </li>
@@ -57,6 +57,17 @@ export default {
           completed: this.todo.completed
         });
       }
+    },
+    deleteTodo() {
+      fetch('/delete?id=' + this.todo.id, { method: 'DELETE' }).then(function (response) {
+        if (response.status === 200) {
+          this.eventBus.$emit('refresh');
+        } else {
+          alert('Error');
+        }
+      }.bind(this), function (error) {
+        alert(error);
+      })
     },
     getTodoStatus() {
       return {

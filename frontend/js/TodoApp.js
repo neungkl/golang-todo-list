@@ -13,7 +13,7 @@ export default {
   <div>
     <todo-header v-bind:eventBus="eventBus"></todo-header>
     <todo-main v-bind:eventBus="eventBus"></todo-main>
-    <todo-footer></todo-footer>
+    <todo-footer v-bind:eventBus="eventBus"></todo-footer>
   </div>
   `,
   data() {
