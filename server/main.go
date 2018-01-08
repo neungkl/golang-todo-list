@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -101,6 +103,61 @@ func AddTodo(res http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(res).Encode(status)
 }
 
+// UpdateTodo updates todo
+func UpdateTodo(res http.ResponseWriter, req *http.Request) {
+	var todo Todo
+	status := Status{Success: false}
+
+	err := json.NewDecoder(req.Body).Decode(&todo)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
+	} else {
+		if todo.ID == nil {
+			res.WriteHeader(http.StatusBadRequest)
+			status.Message = "ID should not be blanked"
+		} else {
+			var userid int
+			err := db.QueryRow(`
+				UPDATE todo SET description = $1, completed = $2 WHERE id = $3 RETURNING id
+			`, todo.Description, todo.Completed, todo.ID).Scan(&userid)
+
+			if err != nil {
+				res.WriteHeader(http.StatusBadRequest)
+				log.Println(err)
+			} else {
+				status.Success = true
+				status.Data = &todo
+			}
+		}
+	}
+
+	json.NewEncoder(res).Encode(status)
+}
+
+// DeleteTodo deletes todo
+func DeleteTodo(res http.ResponseWriter, req *http.Request) {
+	id, err := strconv.Atoi(req.URL.Query().Get("id"))
+	status := Status{Success: false}
+
+	if err == nil {
+		var userid int
+		err := db.QueryRow(`DELETE FROM todo WHERE id = $1 RETURNING id`, id).Scan(&userid)
+
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
+		} else {
+			status.Success = true
+		}
+	} else {
+		res.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
+	}
+
+	json.NewEncoder(res).Encode(status)
+}
+
 func main() {
 	connStr := "postgres://postgres:todopass@db/postgres?sslmode=disable"
 	pgDb, err := sql.Open("postgres", connStr)
@@ -112,6 +169,17 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/list", ListTodo).Methods("GET")
 	router.HandleFunc("/add", AddTodo).Methods("POST")
+	router.HandleFunc("/update", UpdateTodo).Methods("POST")
+	router.HandleFunc("/delete", DeleteTodo).Methods("DELETE")
+
+	router.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if strings.HasSuffix(path, "vue") {
+			w.Header().Set("Content-Type", "apllication/javascript")
+		}
+		http.ServeFile(w, r, "../frontend/"+r.URL.Path)
+	})
+
 	log.Println("Start server complete.")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }

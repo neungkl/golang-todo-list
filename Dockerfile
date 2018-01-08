@@ -8,6 +8,6 @@ WORKDIR /todo
 COPY . .
 
 WORKDIR ./server
-RUN chmod +x start_server.sh
+RUN chmod +x ./start_server.sh
 
 CMD ["sh", "./start_server.sh"]
