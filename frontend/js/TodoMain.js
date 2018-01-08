@@ -1,45 +1,43 @@
+import TodoItem from './TodoItem.js';
+
 export default {
-	name: 'todo-main',
+  name: 'todo-main',
+  components: {
+    'todo-item': TodoItem
+  },
 	template: `
-  <div class="main">
+  <section class="main">
     <input id="toggle-all" class="toggle-all" type="checkbox">
     <label for="toggle-all">Mark all as complete</label>
     <ul class="todo-list" v-for="todo in todos">
-      <li v-bind:class="getTodoStatus(todo)">
-        <div class="view">
-          <input class="toggle" type="checkbox" v-on:click="updateChecked(todo, $event)">
-          <label>{{ todo.description }}</label>
-          <button class="destroy"></button>
-        </div>
-        <input class="edit" value="Create a TodoMVC template">
-      </li>
+      <todo-item v-bind:todo="todo"></todo-item>
     </ul>
-  </div>
+  </section>
   `,
 	data() {
-		return {
+    return {
 			todos: [
 				{
 					description: 'Taste Javascript',
-          completed: true,
-          checked: false
+          completed: true
 				},
 				{
 					description: 'Buy a unicord',
-          completed: false,
-          checked: false
+          completed: false
 				}
 			]
 		};
   },
   methods: {
-    updateChecked(todo, event) {
-      todo.checked = event.target.checked;
-    },
-    getTodoStatus(todo) {
-      return {
-        'completed': todo.completed
-      }
+    fetchData() {
+      fetch('/list').then(function (response) {
+        return response.json();
+      }).then(function (response) {
+        this.todos = response;
+      }.bind(this));
     }
+  },
+  mounted() {
+    this.fetchData();
   }
 };
