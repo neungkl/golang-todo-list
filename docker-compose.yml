@@ -1,0 +1,31 @@
+version: '3'
+services:
+
+  webserver:
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - ./server:/todo/server
+      - ./frontend:/todo/frontend
+    links:
+      - db
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: todopass
+    ports:
+      - 5432:5432
+
+  pgadmin:
+    image: fenglc/pgadmin4
+    links:
+      - db
+    volumes:
+       - ./data/pgadmin:/var/lib/pgadmin
+    ports:
+      - 5050:5050
+    restart: unless-stopped
+    
+    
