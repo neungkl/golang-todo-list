@@ -13,6 +13,8 @@ services:
 
   db:
     image: postgres
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: todopass
     ports:
